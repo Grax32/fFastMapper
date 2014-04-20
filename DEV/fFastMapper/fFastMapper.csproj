@@ -49,6 +49,7 @@
     <Compile Include="fFastMapperFluent.cs" />
     <Compile Include="fFastMapperGlobalSettingsFluent.cs" />
     <Compile Include="fFastMapperInternal.cs" />
+    <Compile Include="fFastMapperInternalExtensions.cs" />
     <Compile Include="ParameterExpressionModifier.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PropertyList.cs" />

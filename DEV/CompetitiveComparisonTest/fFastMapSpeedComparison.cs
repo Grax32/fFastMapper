@@ -14,6 +14,7 @@ namespace CompetitiveComparisonTest
     public class fFastMapSpeedComparison
     {
         [TestMethod]
+        [Ignore]
         public void CompareSpeed()
         {
 

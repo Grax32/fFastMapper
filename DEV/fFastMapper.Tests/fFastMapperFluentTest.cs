@@ -211,6 +211,7 @@ namespace fFastMapper.Tests
             Assert.Inconclusive("Verify the correctness of this test method.");
         }
 
+        [Ignore]
         [TestMethod()]
         public void MapTest1()
         {

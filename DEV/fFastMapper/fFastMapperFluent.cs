@@ -92,5 +92,11 @@ namespace Grax.fFastMapper
         {
             return fFastMapperInternal<TRight, TLeft>.fFastMapFluent;
         }
+
+        public fFastMapperFluent<TLeft,TRight> SetMaxRecursionLevel(int maxRecursionLevel)
+        {
+            fFastMapperInternal<TLeft, TRight>.MaxRecursionLevel = maxRecursionLevel;
+            return this;
+        }
     }
 }

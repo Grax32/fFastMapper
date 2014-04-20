@@ -11,22 +11,31 @@ namespace fFastMapper.Tests
     [TestClass]
     public class fFastMapperAdvancedPropertyMatching
     {
-        [TestMethod]
-        public void FindMatchesTest()
-        {
-            //PropertyList<Left>.InitializeProperties();
-            //PropertyList<Right>.InitializeProperties();
+        //[TestMethod]
+        //public void FindMatchesTest()
+        //{
+        //    //PropertyList<Left>.InitializeProperties();
+        //    //PropertyList<Right>.InitializeProperties();
 
-            var leftList = PropertyList<Left>.Properties;
-            var rightList = PropertyList<Right>.Properties;
-            
-            var keyList = leftList.Keys.Intersect(rightList.Keys);
+        //    var leftList = PropertyList<Left>.Properties;
+        //    var rightList = PropertyList<Right>.Properties;
 
-            foreach (var key in keyList)
-            {
-                Debug.Print("{0} == {1}", leftList[key].ToString(), rightList[key].ToString());
-            }
-        }
+        //    var keyList = leftList.Keys.Intersect(rightList.Keys);
+
+        //    foreach (var key in keyList)
+        //    {
+        //        Debug.Print("{0} == {1}", leftList[key].ToString(), rightList[key].ToString());
+        //    }
+
+        //    var start = new Left
+        //    {
+        //        SubParentSubSubSubMyString = "12345",
+        //        SubParent = new SubType()
+        //    };
+
+        //    var result = new Right();
+        //    fFastMap.Map<Left, Right>(new Left(), result);
+        //}
 
         class Left
         {
@@ -67,8 +76,8 @@ namespace fFastMapper.Tests
 
             var right = fFastMap.MapperFor<Invoice, ModelView>().Map(left);
 
-            Assert.IsTrue(left.Person.Address.Street1 == right.PersonAddressStreet1);
-            Assert.IsFalse(left.Person.AddressStreet1 == right.PersonAddressStreet1);
+            Assert.IsTrue(left.Person.AddressStreet1 == right.PersonAddressStreet1);
+            Assert.IsFalse(left.Person.Address.Street1 == right.PersonAddressStreet1);
             Assert.IsFalse(left.PersonAddress.Street1 == right.PersonAddressStreet1);
 
 

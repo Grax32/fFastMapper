@@ -64,6 +64,7 @@
     <Compile Include="fFastGetSetTest.cs" />
     <Compile Include="Library\Functions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ParameterExpressionModifierTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\fFastMapper\fFastMapper.csproj">
