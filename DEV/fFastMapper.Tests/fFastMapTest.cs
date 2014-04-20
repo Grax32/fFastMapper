@@ -78,6 +78,7 @@ namespace fFastMapper.Tests
             Assert.Inconclusive("Verify the correctness of this test method.");
         }
 
+        [Ignore]
         [TestMethod()]
         public void MapTest()
         {
@@ -97,6 +98,7 @@ namespace fFastMapper.Tests
         }
 
         [TestMethod()]
+        [Ignore]
         public void MapperForTest()
         {
             MapperForTestHelper<GenericParameterHelper, GenericParameterHelper>();

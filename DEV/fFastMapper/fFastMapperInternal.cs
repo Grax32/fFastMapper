@@ -19,7 +19,9 @@ namespace Grax.fFastMapper
             }
         }
 
+        internal static int MaxRecursionLevel = 8;
         internal static fFastMap.MappingDirection MappingDirection = fFastMap.DefaultMappingDirection;
+
         private static bool IsMappingBidirectional
         {
             get
@@ -121,81 +123,166 @@ namespace Grax.fFastMapper
             var leftType = typeof(TLeft);
             var rightType = typeof(TRight);
 
-            var leftList = PropertyList<TLeft>.Properties;
-            var rightList = PropertyList<TRight>.Properties;
-
-            var leftKeys = PropertyList<TLeft>.MatchingKeys;
-            var rightKeys = PropertyList<TRight>.MatchingKeys;
-
-            var keyList = leftKeys.Keys.Intersect(rightKeys.Keys);
-
-            foreach (var key in keyList)
+            var left = new TypeMatchData
             {
-                var leftKey = leftKeys[key];
-                var rigthKey = rightKeys[key];
+                Expression = Expression.Parameter(leftType),
+                Prefix = "",
+                Type = leftType
+            };
 
-                //Debug.WriteLine("{0} == {1}", leftList[leftKey].ToString(), rightList[rigthKey].ToString());
+            var right = new TypeMatchData
+            {
+                Expression = Expression.Parameter(rightType),
+                Prefix = "",
+                Type = rightType
+            };
 
-                var leftProperty = leftList[leftKey];
-                var rightProperty = rightList[rigthKey];
-
-                var leftPropertyInfo = (PropertyInfo)leftProperty.Member;
-                var rightPropertyInfo = (PropertyInfo)rightProperty.Member;
-
-                if (leftPropertyInfo.CanRead && rightPropertyInfo.CanWrite)
-                {
-                    propertyExpressionMaps.Add(Tuple.Create((Expression)leftProperty, (Expression)rightProperty));
-                }
-            }
-
-
-            //var leftProperties = leftType.GetProperties().Where(v => v.CanRead);
-            //var rightProperties = rightType.GetProperties().Where(v => v.CanWrite);
-
-            //foreach (var leftProperty in leftProperties)
-            //{
-            //    var rightProperty = rightProperties.Where(v => v.Name == leftProperty.Name && v.PropertyType == leftProperty.PropertyType).SingleOrDefault();
-
-            //    var propertyType = leftProperty.PropertyType;
-
-            //    if (rightProperty != null && propertyType.IsTypeMatchable())
-            //    {
-            //        AddPropertyMapperByPropertyInfo(leftProperty, rightProperty);
-            //    }
-            //    else
-            //    {
-            //        //if (
-
-
-            //        // SubSubDescription maps to Sub.Sub.Description
-            //        // Sub.Sub.Description maps to SubSubDescription
-
-            //        //foreach (var rightPropertyMatch in rightProperties.Where(v => v.Name != leftProperty.Name && leftProperty.Name.StartsWith(v.Name)))
-            //        //{
-            //        //    Expression propertyExpression = Expression.Parameter(leftType);
-            //        //    if (FindNameMatch(leftProperty.Name, leftType, ref propertyExpression))
-            //        //    {
-            //        //        Debug.Print("Matched " + leftProperty.Name + " to " + propertyExpression.ToString());
-            //        //    }
-            //        //}
-
-            //        //foreach (var rightPropertyMatch in rightProperties.Where(v => v.Name != leftProperty.Name && v.Name.StartsWith(leftProperty.Name)))
-            //        //{
-            //        //    Expression propertyExpression = Expression.Parameter(leftType);
-            //        //    if (FindNameMatch(rightPropertyMatch.Name, rightType, ref propertyExpression))
-            //        //    {
-            //        //        Debug.Print("Matched " + rightPropertyMatch.Name + " to " + propertyExpression.ToString());
-            //        //    }
-            //        //}
-            //    }
-            //}
+            RecursiveMapAnalyze(left, right, 0);
 
             if (callReverse && IsMappingBidirectional)
             {
                 fFastMapperInternal<TRight, TLeft>.AddDefaultMappings(fFastMap.CallReverseFalse, quitSilentlyIfMappingStarted);
             }
 
+            var itemsToRemove = new List<Tuple<Expression, Expression>>();
+
+            // remove redundant mappings
+            foreach (var groupItem in propertyExpressionMaps
+                .GroupBy(v => v.Item2.ToString(), (key, g) => new { Count = g.Count(), Grouping = g })
+                .Where(v => v.Count > 1))
+            {
+                var keepItem = groupItem.Grouping
+                    .OrderBy(item => MemberExpressionDepth(item.Item1))
+                    .ThenBy(item => MemberExpressionDepth(item.Item2))
+                    .First();
+
+                foreach (var item in groupItem.Grouping.Where(v => !v.Equals(keepItem)))
+                {
+                    itemsToRemove.Add(item);
+                }
+            }
+
+            itemsToRemove.ForEach(v => propertyExpressionMaps.Remove(v));
+
             CompileMapper();
+        }
+
+        internal static int MemberExpressionDepth(Expression expression)
+        {
+            if (expression is ParameterExpression)
+            {
+                return 0;
+            }
+
+            if (expression is MemberExpression)
+            {
+                var memberExpression = (MemberExpression)expression;
+                return 1 + MemberExpressionDepth(memberExpression.Expression);
+            }
+
+            throw new Exception("This method can only be used with MemberExpression and ParameterExpression");
+        }
+
+
+        internal static bool NameMatchEquals(string leftName, string rightName)
+        {
+            var workingLeftName = leftName.Replace(".", "");
+            var workingRightName = rightName.Replace(".", "");
+            return workingLeftName.Equals(workingRightName);
+        }
+
+        /// <summary>
+        /// Return true if leftName starts with rightName and left name is not equal to right name
+        /// </summary>
+        /// <param name="leftName"></param>
+        /// <param name="rightName"></param>
+        /// <returns></returns>
+        internal static bool NameMatchStartsWith(string leftName, string rightName)
+        {
+            var workingLeftName = leftName.Replace(".", "");
+            var workingRightName = rightName.Replace(".", "");
+            return workingLeftName != workingRightName && workingLeftName.StartsWith(workingRightName);
+        }
+
+        internal class TypeMatchData
+        {
+            public string Prefix;
+            public Type Type;
+            public Expression Expression;
+        }
+
+        internal static void RecursiveMapAnalyze(TypeMatchData left, TypeMatchData right, int recursionLevel)
+        {
+            Debug.Print("Recursing Left: for " + left.Expression.ToString() + ", " + left.Prefix + "," + left.Type.Name);
+            Debug.Print("Recursing Right: for " + right.Expression.ToString() + ", " + right.Prefix + "," + right.Type.Name);
+
+            if (recursionLevel > MaxRecursionLevel)
+            {
+                return;
+            }
+
+            var leftProperties = left.Type.GetProperties().Where(v => v.CanRead);
+            var rightProperties = right.Type.GetProperties().Where(v => v.CanWrite);
+
+            var leftPrefix = left.Prefix;
+            var rightPrefix = right.Prefix;
+
+            foreach (var leftProperty in leftProperties)
+            {
+                var leftPropertyName = leftProperty.Name;
+
+                var leftPropertyType = leftProperty.PropertyType;
+
+                var rightMatches = rightProperties
+                    .Where(rightProperty => NameMatchStartsWith(leftPrefix + leftPropertyName, rightPrefix + rightProperty.Name));
+
+                foreach (var matchingProperty in rightMatches)
+                {
+                    var leftParm = left;
+                    var rightParm = new TypeMatchData
+                    {
+                        Expression = Expression.Property(right.Expression, matchingProperty),
+                        Type = matchingProperty.PropertyType,
+                        Prefix = rightPrefix + "." + matchingProperty.Name
+                    };
+
+                    RecursiveMapAnalyze(leftParm, rightParm, recursionLevel + 1);
+                }
+
+                var leftMatches = rightProperties
+                      .Where(rightProperty => NameMatchStartsWith(rightPrefix + rightProperty.Name, leftPrefix + leftPropertyName));
+
+                foreach (var matchingProperty in leftMatches)
+                {
+                    var leftParm = new TypeMatchData
+                    {
+                        Expression = Expression.Property(left.Expression, leftProperty),
+                        Type = leftProperty.PropertyType,
+                        Prefix = leftPrefix + "." + leftPropertyName
+                    };
+
+                    var rightParm = right;
+
+                    RecursiveMapAnalyze(leftParm, rightParm, recursionLevel + 1);
+                }
+
+                // direct match
+                var foundRightProperty = rightProperties
+                    .WhereAssignableFrom(leftPropertyType)
+                    .Where(rightProperty =>
+                        NameMatchEquals(rightPrefix + rightProperty.Name, leftPrefix + leftPropertyName))
+                        .SingleOrDefault();
+
+                if (foundRightProperty != null) // found match
+                {
+                    Debug.Print("Found " + left.Expression.ToString() + " == " + right.Expression.ToString());
+
+                    Expression leftExpression = Expression.Property(left.Expression, leftProperty);
+                    Expression rightExpression = Expression.Property(right.Expression, foundRightProperty);
+
+                    propertyExpressionMaps.Add(Tuple.Create(leftExpression, rightExpression));
+                }
+            }
         }
 
         internal static void CompileMapper()
@@ -353,12 +440,13 @@ namespace Grax.fFastMapper
                 throw new ArgumentException("Must contain a MemberExpression", "leftProperty");
             }
 
-
+            // using .ToList to avoid CollectionModified errors
             if (leftPropertyMemberExpression.Expression is ParameterExpression)
             {
-                var matchingMaps = propertyMaps.Where(v => v.Item1 == (PropertyInfo)leftPropertyMemberExpression.Member).ToList();
-
-                foreach (var map in matchingMaps)
+                foreach (var map in  propertyMaps
+                    .Where(v => v.Item1 == (PropertyInfo)leftPropertyMemberExpression.Member)
+                    .ToList()
+                    )
                 {
                     var rightProperty = map.Item2;
                     if (callReverse && IsMappingBidirectional)
@@ -372,22 +460,23 @@ namespace Grax.fFastMapper
                     propertyMaps.Remove(map);
                 }
             }
-            else
+
+            // using .ToList to avoid CollectionModified errors
+            foreach (var map in
+                propertyExpressionMaps
+                .Where(v => MemberExpressionEquivalent(leftProperty, v.Item1))
+                .ToList()
+                )
             {
-                var matchingMaps = propertyExpressionMaps.Where(v => MemberExpressionEquivalent(leftProperty, v.Item1)).ToList();
-
-                foreach (var map in matchingMaps)
+                var rightProperty = map.Item2;
+                if (callReverse && IsMappingBidirectional)
                 {
-                    var rightProperty = map.Item2;
-                    if (callReverse && IsMappingBidirectional)
-                    {
-                        var rightParameterExpression = Expression.Parameter(typeof(TRight));
-                        var rightPropertyLambdaExpression = Expression.Lambda<Func<TRight, TPropertyType>>(rightProperty, rightParameterExpression);
-                        fFastMapperInternal<TRight, TLeft>.DeletePropertyMapper<TPropertyType>(rightPropertyLambdaExpression, fFastMap.CallReverseFalse);
-                    }
-
-                    propertyExpressionMaps.Remove(map);
+                    var rightParameterExpression = Expression.Parameter(typeof(TRight));
+                    var rightPropertyLambdaExpression = Expression.Lambda<Func<TRight, TPropertyType>>(rightProperty, rightParameterExpression);
+                    fFastMapperInternal<TRight, TLeft>.DeletePropertyMapper<TPropertyType>(rightPropertyLambdaExpression, fFastMap.CallReverseFalse);
                 }
+
+                propertyExpressionMaps.Remove(map);
             }
 
             CompileMapper();
