@@ -1,15 +1,17 @@
-﻿using System;
+﻿using Grax.fFastMapper;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Text;
-using Grax.fFastMapper;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace fFastMapper.Tests
 {
     [TestClass]
+    [ExcludeFromCodeCoverage]
     public class fFastMapSpeedComparison
     {
         [TestMethod]
@@ -76,8 +78,7 @@ namespace fFastMapper.Tests
             Assert.AreEqual(default(int), result.MultiLevelRight.L2.Id);
         }
 
-        [Ignore]
-        [TestMethod]
+//        [TestMethod]
         public void CompareSpeed()
         {
 

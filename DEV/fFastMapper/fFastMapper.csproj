@@ -47,6 +47,7 @@
     <Compile Include="fFastMap.cs" />
     <Compile Include="fFastMapExtensions.cs" />
     <Compile Include="fFastMapperFluent.cs" />
+    <Compile Include="fFastMapperGlobal.cs" />
     <Compile Include="fFastMapperGlobalSettingsFluent.cs" />
     <Compile Include="fFastMapperInternal.cs" />
     <Compile Include="fFastMapperInternalExtensions.cs" />

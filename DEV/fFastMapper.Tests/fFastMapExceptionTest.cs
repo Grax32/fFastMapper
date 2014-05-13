@@ -3,16 +3,16 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Runtime.Serialization;
 using fFastMapper.Tests.Library;
+using System.Diagnostics.CodeAnalysis;
 
 namespace fFastMapper.Tests
 {
-
-
     /// <summary>
     ///This is a test class for fFastMapExceptionTest and is intended
     ///to contain all fFastMapExceptionTest Unit Tests
     ///</summary>
-    [TestClass()]
+    [TestClass]
+    [ExcludeFromCodeCoverage]
     public class fFastMapExceptionTest
     {
         const string GenericErrorMessage = "Generic Error Message";

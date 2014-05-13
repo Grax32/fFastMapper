@@ -6,6 +6,7 @@ using System.Reflection;
 using System.Linq.Expressions;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace fFastMapper.Tests
 {
@@ -13,7 +14,8 @@ namespace fFastMapper.Tests
     ///This is a test class for fFastMapperInternalTest and is intended
     ///to contain all fFastMapperInternalTest Unit Tests
     ///</summary>
-    [TestClass()]
+    [TestClass]
+    [ExcludeFromCodeCoverage]
     public class fFastMapperInternalTest
     {
         class fFastMapper_Left { public int Id { get; set; } }
@@ -169,5 +171,110 @@ namespace fFastMapper.Tests
 
         class fluentLeft { }
         class fluentRight { }
+
+        [TestMethod]
+        public void fFastMapper_NoMapping()
+        {
+            fFastMap.AutoInitialize = false;
+            var left = new noAutoInitLeft();
+            var right = new noAutoInitRight();
+            Exception ex = null;
+            var message = "Mapping has not been configured from noAutoInitLeft to noAutoInitRight";
+
+            try
+            {
+                var result = fFastMap.Map(left, right);
+            }
+            catch (fFastMap.fFastMapException exc)
+            {
+                ex = exc;
+            }
+            finally
+            {
+                fFastMap.AutoInitialize = true;
+            }
+
+            Assert.IsNotNull(ex);
+            Assert.AreEqual(message, ex.Message);
+        }
+
+        class noAutoInitLeft { }
+        class noAutoInitRight { }
+
+        [TestMethod]
+        public void RecursiveMapAnalyze_Test()
+        {
+            fFastMap.AutoInitialize = false;
+
+            var left = new fFastMapperGlobal.TypeMatchData
+            {
+                Expression = Expression.Parameter(typeof(RecursiveClassLeft)),
+                Prefix = "",
+                Type = typeof(RecursiveClassLeft)
+            };
+
+            var right = new fFastMapperGlobal.TypeMatchData
+            {
+                Expression = Expression.Parameter(typeof(RecursiveClassRight)),
+                Prefix = "",
+                Type = typeof(RecursiveClassRight)
+            };
+
+
+            fFastMapperInternal<RecursiveClassLeft, RecursiveClassRight>.RecursiveMapAnalyze(left, right, 0);
+
+            var resultCount = fFastMapperInternal<RecursiveClassLeft, RecursiveClassRight>.Mappings().Count;
+
+            Assert.AreEqual(2, resultCount);
+
+            fFastMap.AutoInitialize = true;
+        }
+
+        class RecursiveClassLeft
+        {
+            public RecursiveClassLeft RecProp { get; set; }
+            public string TheStringProperty { get; set; }
+
+            public string PropRightPropRightPropRightPropRightPropRightPropRightPropRightPropRightPropRightPropRightPropString { get; set; }
+            public string PropRightPropRightPropRightPropRightPropString { get; set; }
+            public string PropRightPropRightPropString { get; set; }
+        }
+
+        class RecursiveClassRight
+        {
+            public string RecPropRecPropRecPropRecPropRecPropRecPropRecPropRecPropRecPropRecPropRecPropTheStringProperty { get; set; }
+
+            public string RecPropRecPropRecPropRecPropTheStringProperty { get; set; }
+
+            public string RecPropRecPropTheStringProperty { get; set; }
+
+            public RecursiveClassLeft PropRight { get; set; }
+
+            public string PropString { get; set; }
+        }
+
+        [TestMethod]
+        public void fFastMapperInternal_MemberExpressionDepthException()
+        {
+            Expression<Func<ExpressionDepthHelper, string>> expr = v => v.RandomMethod();
+            ArgumentException trappedException = null;
+
+            try
+            {
+                var x = fFastMapperInternal<RecursiveClassLeft, RecursiveClassRight>.MemberExpressionDepth(expr);
+            }
+            catch (ArgumentException ex)
+            {
+                trappedException = ex;
+            }
+
+            Assert.IsNotNull(trappedException);
+            Assert.AreEqual("expression", trappedException.ParamName);
+        }
+
+        class ExpressionDepthHelper
+        {
+            public string RandomMethod() { return ""; }
+        }
     }
 }
