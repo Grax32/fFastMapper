@@ -123,14 +123,14 @@ namespace Grax.fFastMapper
             var leftType = typeof(TLeft);
             var rightType = typeof(TRight);
 
-            var left = new TypeMatchData
+            var left = new fFastMapperGlobal.TypeMatchData
             {
                 Expression = Expression.Parameter(leftType),
                 Prefix = "",
                 Type = leftType
             };
 
-            var right = new TypeMatchData
+            var right = new fFastMapperGlobal.TypeMatchData
             {
                 Expression = Expression.Parameter(rightType),
                 Prefix = "",
@@ -180,7 +180,7 @@ namespace Grax.fFastMapper
                 return 1 + MemberExpressionDepth(memberExpression.Expression);
             }
 
-            throw new Exception("This method can only be used with MemberExpression and ParameterExpression");
+            throw new ArgumentException("This method can only be used with MemberExpression and ParameterExpression", "expression");
         }
 
 
@@ -195,26 +195,22 @@ namespace Grax.fFastMapper
         /// Return true if leftName starts with rightName and left name is not equal to right name
         /// </summary>
         /// <param name="leftName"></param>
-        /// <param name="rightName"></param>
+        /// <param name="startsWithName"></param>
         /// <returns></returns>
-        internal static bool NameMatchStartsWith(string leftName, string rightName)
+        internal static bool NameMatchStartsWith(string compareName, string startsWithName)
         {
-            var workingLeftName = leftName.Replace(".", "");
-            var workingRightName = rightName.Replace(".", "");
+            var workingLeftName = compareName.Replace(".", "");
+            var workingRightName = startsWithName.Replace(".", "");
             return workingLeftName != workingRightName && workingLeftName.StartsWith(workingRightName);
         }
 
-        internal class TypeMatchData
-        {
-            public string Prefix;
-            public Type Type;
-            public Expression Expression;
-        }
 
-        internal static void RecursiveMapAnalyze(TypeMatchData left, TypeMatchData right, int recursionLevel)
+        internal static void RecursiveMapAnalyze(fFastMapperGlobal.TypeMatchData left, fFastMapperGlobal.TypeMatchData right, int recursionLevel)
         {
-            Debug.Print("Recursing Left: for " + left.Expression.ToString() + ", " + left.Prefix + "," + left.Type.Name);
-            Debug.Print("Recursing Right: for " + right.Expression.ToString() + ", " + right.Prefix + "," + right.Type.Name);
+            //Debug.Print("Recursing Left: for " + left.Expression.ToString() + ", " + left.Prefix + "," + left.Type.Name);
+            //Debug.Print("Recursing Right: for " + right.Expression.ToString() + ", " + right.Prefix + "," + right.Type.Name);
+
+            Debug.Print("L" + recursionLevel + ": Left: " + left.Prefix + " --- Right: " + right.Prefix);
 
             if (recursionLevel > MaxRecursionLevel)
             {
@@ -233,36 +229,39 @@ namespace Grax.fFastMapper
 
                 var leftPropertyType = leftProperty.PropertyType;
 
-                var rightMatches = rightProperties
-                    .Where(rightProperty => NameMatchStartsWith(leftPrefix + leftPropertyName, rightPrefix + rightProperty.Name));
 
-                foreach (var matchingProperty in rightMatches)
+                var hasLeftMatches = rightProperties
+                  .Any(rightProperty => NameMatchStartsWith(rightPrefix + rightProperty.Name, leftPrefix + leftPropertyName));
+
+                if (hasLeftMatches)
                 {
-                    var leftParm = left;
-                    var rightParm = new TypeMatchData
-                    {
-                        Expression = Expression.Property(right.Expression, matchingProperty),
-                        Type = matchingProperty.PropertyType,
-                        Prefix = rightPrefix + "." + matchingProperty.Name
-                    };
-
-                    RecursiveMapAnalyze(leftParm, rightParm, recursionLevel + 1);
-                }
-
-                var leftMatches = rightProperties
-                      .Where(rightProperty => NameMatchStartsWith(rightPrefix + rightProperty.Name, leftPrefix + leftPropertyName));
-
-                foreach (var matchingProperty in leftMatches)
-                {
-                    var leftParm = new TypeMatchData
+                    var leftParm = new fFastMapperGlobal.TypeMatchData
                     {
                         Expression = Expression.Property(left.Expression, leftProperty),
                         Type = leftProperty.PropertyType,
                         Prefix = leftPrefix + "." + leftPropertyName
                     };
 
-                    var rightParm = right;
+                    var rightParm = new fFastMapperGlobal.TypeMatchData(right);
 
+                    Debug.Print("L" + recursionLevel + ":" + "LeftMatch: Left: " + leftPrefix + " Right: " + rightPrefix);// + " Property: " + matchingProperty.Name);
+                    RecursiveMapAnalyze(leftParm, rightParm, recursionLevel + 1);
+                }
+
+                var rightMatches = rightProperties
+                    .Where(rightProperty => NameMatchStartsWith(leftPrefix + leftPropertyName, rightPrefix + rightProperty.Name));
+
+                foreach (var matchingProperty in rightMatches)
+                {
+                    var leftParm = new fFastMapperGlobal.TypeMatchData(left);
+                    var rightParm = new fFastMapperGlobal.TypeMatchData
+                    {
+                        Expression = Expression.Property(right.Expression, matchingProperty),
+                        Type = matchingProperty.PropertyType,
+                        Prefix = rightPrefix + "." + matchingProperty.Name
+                    };
+
+                    Debug.Print("L" + recursionLevel + ":" + "RightMatch: Left: " + leftPrefix + " Right: " + rightPrefix + " Property: " + matchingProperty.Name);
                     RecursiveMapAnalyze(leftParm, rightParm, recursionLevel + 1);
                 }
 
@@ -275,7 +274,7 @@ namespace Grax.fFastMapper
 
                 if (foundRightProperty != null) // found match
                 {
-                    Debug.Print("Found " + left.Expression.ToString() + " == " + right.Expression.ToString());
+                    Debug.Print("L" + recursionLevel + ":" + "Found " + left.Expression.ToString() + " == " + right.Expression.ToString());
 
                     Expression leftExpression = Expression.Property(left.Expression, leftProperty);
                     Expression rightExpression = Expression.Property(right.Expression, foundRightProperty);
@@ -283,6 +282,7 @@ namespace Grax.fFastMapper
                     propertyExpressionMaps.Add(Tuple.Create(leftExpression, rightExpression));
                 }
             }
+            Debug.Print("L" + recursionLevel + ":" + " Exiting Level ");
         }
 
         internal static void CompileMapper()
@@ -295,13 +295,13 @@ namespace Grax.fFastMapper
             expressions.Add(NullCheckExpression(leftParam));
             expressions.Add(NullCheckExpression(rightParam));
 
-            foreach (var propertyMap in propertyMaps)
-            {
-                var leftPropertyExpression = Expression.Property(leftParam, propertyMap.Item1);
-                var rightPropertyExpression = Expression.Property(rightParam, propertyMap.Item2);
-                var assignmentExpression = Expression.Assign(rightPropertyExpression, leftPropertyExpression);
-                expressions.Add(assignmentExpression);
-            }
+            //foreach (var propertyMap in propertyMaps)
+            //{
+            //    var leftPropertyExpression = Expression.Property(leftParam, propertyMap.Item1);
+            //    var rightPropertyExpression = Expression.Property(rightParam, propertyMap.Item2);
+            //    var assignmentExpression = Expression.Assign(rightPropertyExpression, leftPropertyExpression);
+            //    expressions.Add(assignmentExpression);
+            //}
 
             foreach (var propertyExpressionMap in propertyExpressionMaps)
             {
@@ -376,7 +376,7 @@ namespace Grax.fFastMapper
             return Expression.IfThen(isNull, Expression.Throw(Expression.Constant(argumentException)));
         }
 
-        internal static Func<TLeft, TRight, TRight> mapperFunc = (left, right) => { throw new fFastMap.fFastMapException(string.Format("Mapping has not been configured from {0} to {1} ", typeof(TLeft).Name, typeof(TRight).Name)); };
+        internal static Func<TLeft, TRight, TRight> mapperFunc = (left, right) => { throw new fFastMap.fFastMapException(string.Format("Mapping has not been configured from {0} to {1}", typeof(TLeft).Name, typeof(TRight).Name)); };
 
         /// <summary>
         /// Read-only list of mappings
@@ -443,7 +443,7 @@ namespace Grax.fFastMapper
             // using .ToList to avoid CollectionModified errors
             if (leftPropertyMemberExpression.Expression is ParameterExpression)
             {
-                foreach (var map in  propertyMaps
+                foreach (var map in propertyMaps
                     .Where(v => v.Item1 == (PropertyInfo)leftPropertyMemberExpression.Member)
                     .ToList()
                     )

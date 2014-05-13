@@ -6,10 +6,12 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Diagnostics.CodeAnalysis;
 
 namespace CompetitiveComparisonTest
 {
     [TestClass]
+    [ExcludeFromCodeCoverage]
     public class NamedPropertyRecursionPoc
     {
 

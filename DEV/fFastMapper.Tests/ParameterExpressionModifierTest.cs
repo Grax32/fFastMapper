@@ -1,11 +1,13 @@
-﻿using System;
+﻿using Grax.fFastMapper;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
-using Grax.fFastMapper;
 
 namespace fFastMapper.Tests
 {
     [TestClass]
+    [ExcludeFromCodeCoverage]
     public class ParameterExpressionModifierTest
     {
         [TestMethod]

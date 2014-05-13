@@ -5,6 +5,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using Grax.fFastMapper;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Diagnostics.CodeAnalysis;
 
 namespace fFastMapper.Tests
 {
@@ -14,7 +15,8 @@ namespace fFastMapper.Tests
     ///This is a test class for fFastMapperFluentTest and is intended
     ///to contain all fFastMapperFluentTest Unit Tests
     ///</summary>
-    [TestClass()]
+    [TestClass]
+    [ExcludeFromCodeCoverage]
     public class fFastMapperFluentTest
     {
 
@@ -84,6 +86,8 @@ namespace fFastMapper.Tests
                 .SetDefaultMappingDirection(fFastMap.MappingDirection.Bidirectional);
 
             var target = fFastMap.MapperFor<AddPropertyMappersLeft, AddPropertyMappersRight>();
+
+            target.SetMaxRecursionLevel(7);
 
             // act
             var actual = target.AddPropertyMapper(v => v.Id, v => v.Id);
@@ -195,29 +199,6 @@ namespace fFastMapper.Tests
             public string Description { get; set; }
         }
 
-
-        /// <summary>
-        ///A test for Map
-        ///</summary>
-        public void MapTest1Helper<TLeft, TRight>()
-        {
-            fFastMapperFluent<TLeft, TRight> target = new fFastMapperFluent<TLeft, TRight>(); // TODO: Initialize to an appropriate value
-            TLeft source = default(TLeft); // TODO: Initialize to an appropriate value
-            TRight destination = default(TRight); // TODO: Initialize to an appropriate value
-            TRight expected = default(TRight); // TODO: Initialize to an appropriate value
-            TRight actual;
-            actual = target.Map(source, destination);
-            Assert.AreEqual(expected, actual);
-            Assert.Inconclusive("Verify the correctness of this test method.");
-        }
-
-        [Ignore]
-        [TestMethod()]
-        public void MapTest1()
-        {
-            MapTest1Helper<GenericParameterHelper, GenericParameterHelper>();
-        }
-
         /// <summary>
         ///A test for MappingView
         ///</summary>
@@ -256,5 +237,33 @@ namespace fFastMapper.Tests
 
         class MappingLeft { public int Id { get; set; } }
         class MappingRight { public int Id { get; set; } }
+
+        [TestMethod]
+        public void GetMapFunction_Test()
+        {
+            fFastMap
+                .GlobalSettings()
+                .SetAutoInitialize(true)
+                .SetDefaultMappingDirection(fFastMap.MappingDirection.Bidirectional);
+
+            var source = new MapFunctionLeft { Age = 27 };
+            var dest = new MapFunctionRight();
+
+            var target = new fFastMapperFluent<MapFunctionLeft, MapFunctionRight>();
+
+            var actual = target.GetMapFunction();
+            var result = actual(source, dest);
+            Assert.AreEqual(27, dest.Age);
+        }
+
+        class MapFunctionLeft
+        {
+            public int Age { get; set; }
+        }
+
+        class MapFunctionRight
+        {
+            public int Age { get; set; }
+        }
     }
 }

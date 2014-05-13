@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Diagnostics.CodeAnalysis;
 
 namespace Grax.fFastMapper
 {
@@ -17,6 +18,7 @@ namespace Grax.fFastMapper
             return this;
         }
 
+        [Obsolete]
         public fFastMapperFluent<TLeft, TRight> ClearMappers(bool oneWay)
         {
             var callReverse = !oneWay;
@@ -30,6 +32,8 @@ namespace Grax.fFastMapper
             return this;
         }
 
+        [Obsolete]
+        [ExcludeFromCodeCoverage]
         public fFastMapperFluent<TLeft, TRight> DeletePropertyMapper<TPropertyType>(Expression<Func<TLeft, TPropertyType>> leftProperty, bool oneWay)
         {
             var callReverse = !oneWay;
@@ -55,6 +59,8 @@ namespace Grax.fFastMapper
             return this;
         }
 
+        [Obsolete]
+        [ExcludeFromCodeCoverage]
         public fFastMapperFluent<TLeft, TRight> AddDefaultPropertyMappers(bool oneWay)
         {
             var callReverse = !oneWay;

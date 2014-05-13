@@ -5,10 +5,12 @@ using System.Text;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Grax.fFastMapper;
 using fFastMapper.Tests.Library;
+using System.Diagnostics.CodeAnalysis;
 
 namespace fFastMapper.Tests
 {
     [TestClass]
+    [ExcludeFromCodeCoverage]
     public class fFastGetSetTest
     {
         [TestMethod]

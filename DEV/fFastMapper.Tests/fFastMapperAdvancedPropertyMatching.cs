@@ -5,10 +5,12 @@ using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Grax.fFastMapper;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace fFastMapper.Tests
 {
     [TestClass]
+    [ExcludeFromCodeCoverage]
     public class fFastMapperAdvancedPropertyMatching
     {
         //[TestMethod]
