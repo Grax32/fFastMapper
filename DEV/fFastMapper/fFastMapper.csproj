@@ -44,6 +44,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="fFastImplementInterface.cs" />
+    <Compile Include="fFastImplementInterfaceConstants.cs" />
     <Compile Include="fFastMap.cs" />
     <Compile Include="fFastMapExtensions.cs" />
     <Compile Include="fFastMapperFluent.cs" />
