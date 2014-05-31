@@ -276,5 +276,23 @@ namespace fFastMapper.Tests
         {
             public string RandomMethod() { return ""; }
         }
+
+        [TestMethod]
+        public void fFastMapperInternal_DeletePropertyMapping()
+        {
+            ArgumentException trappedException = null;
+
+            try
+            {
+                fFastMapperInternal<string, string>.DeletePropertyMapper(v => v.Split(), false);
+            }
+            catch (ArgumentException ex)
+            {
+                trappedException = ex;
+            }
+
+            Assert.IsNotNull(trappedException);
+            Assert.AreEqual("leftProperty", trappedException.ParamName);
+        }
     }
 }
