@@ -5,8 +5,6 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace fFastMapper.Tests
 {
-
-
     /// <summary>
     ///This is a test class for fFastMapExtensionsTest and is intended
     ///to contain all fFastMapExtensionsTest Unit Tests

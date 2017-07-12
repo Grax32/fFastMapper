@@ -16,9 +16,9 @@ namespace Grax.fFastMapper
 
             public TypeMatchData(TypeMatchData source)
             {
-                this.Prefix = source.Prefix;
-                this.Type = source.Type;
-                this.Expression = source.Expression;
+                Prefix = source.Prefix;
+                Type = source.Type;
+                Expression = source.Expression;
             }
         }
     }

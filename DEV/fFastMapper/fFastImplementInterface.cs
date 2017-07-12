@@ -13,8 +13,6 @@ namespace Grax.fFastImplementer
 {
     public class fFastImplementInterface
     {
-
-
         public class fFastSelfNotifyingBase : INotifyPropertyChanging, INotifyPropertyChanged
         {
             /// <summary>
@@ -42,18 +40,12 @@ namespace Grax.fFastImplementer
 
             protected void RaisePropertyChangingEvent(string propertyName)
             {
-                if (PropertyChanging != null)
-                {
-                    PropertyChanging(this, new PropertyChangingEventArgs(propertyName));
-                }
+                PropertyChanging?.Invoke(this, new PropertyChangingEventArgs(propertyName));
             }
 
             protected void RaisePropertyChangedEvent(string propertyName)
             {
-                if (PropertyChanged != null)
-                {
-                    PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
-                }
+                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             }
 
             public event PropertyChangingEventHandler PropertyChanging;

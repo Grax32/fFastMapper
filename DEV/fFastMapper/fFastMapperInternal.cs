@@ -204,12 +204,10 @@ namespace Grax.fFastMapper
             return workingLeftName != workingRightName && workingLeftName.StartsWith(workingRightName);
         }
 
+        static string NoMatchPrefix = Guid.NewGuid().ToString();
 
         internal static void RecursiveMapAnalyze(fFastMapperGlobal.TypeMatchData left, fFastMapperGlobal.TypeMatchData right, int recursionLevel)
         {
-            //Debug.Print("Recursing Left: for " + left.Expression.ToString() + ", " + left.Prefix + "," + left.Type.Name);
-            //Debug.Print("Recursing Right: for " + right.Expression.ToString() + ", " + right.Prefix + "," + right.Type.Name);
-
             Debug.Print("L" + recursionLevel + ": Left: " + left.Prefix + " --- Right: " + right.Prefix);
 
             if (recursionLevel > MaxRecursionLevel)
@@ -217,23 +215,23 @@ namespace Grax.fFastMapper
                 return;
             }
 
-            var leftProperties = left.Type.GetProperties().Where(v => v.CanRead);
-            var rightProperties = right.Type.GetProperties().Where(v => v.CanWrite);
-
             var leftPrefix = left.Prefix;
             var rightPrefix = right.Prefix;
+
+            if (recursionLevel > 0 && leftPrefix == rightPrefix) return;
+
+            var leftProperties = left.Type.GetProperties().Where(v => v.CanRead).ToList();
+            var rightProperties = right.Type.GetProperties().Where(v => v.CanWrite).ToList();
 
             foreach (var leftProperty in leftProperties)
             {
                 var leftPropertyName = leftProperty.Name;
-
                 var leftPropertyType = leftProperty.PropertyType;
-
-
-                var hasLeftMatches = rightProperties
+                
+                var hasMatches = rightProperties
                   .Any(rightProperty => NameMatchStartsWith(rightPrefix + rightProperty.Name, leftPrefix + leftPropertyName));
 
-                if (hasLeftMatches)
+                if (hasMatches)
                 {
                     var leftParm = new fFastMapperGlobal.TypeMatchData
                     {
@@ -274,10 +272,10 @@ namespace Grax.fFastMapper
 
                 if (foundRightProperty != null) // found match
                 {
-                    Debug.Print("L" + recursionLevel + ":" + "Found " + left.Expression.ToString() + " == " + right.Expression.ToString());
-
                     Expression leftExpression = Expression.Property(left.Expression, leftProperty);
                     Expression rightExpression = Expression.Property(right.Expression, foundRightProperty);
+
+                    Debug.Print("L" + recursionLevel + ":" + "Found " + leftExpression.ToString() + " == " + rightExpression.ToString());
 
                     propertyExpressionMaps.Add(Tuple.Create(leftExpression, rightExpression));
                 }

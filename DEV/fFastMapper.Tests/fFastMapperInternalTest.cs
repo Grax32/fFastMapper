@@ -27,8 +27,8 @@ namespace fFastMapper.Tests
             fFastMapperInternal<fFastMapper_Left, fFastMapper_Right>.ClearMappers(true);
             fFastMapperInternal<fFastMapper_Left, fFastMapper_Right>.MappingDirection = fFastMap.MappingDirection.Bidirectional;
 
-            PropertyInfo leftProperty = typeof(fFastMapper_Left).GetProperty("Id");
-            PropertyInfo rightProperty = typeof(fFastMapper_Right).GetProperty("Id");
+            var leftProperty = typeof(fFastMapper_Left).GetProperty("Id");
+            var rightProperty = typeof(fFastMapper_Right).GetProperty("Id");
             fFastMapperInternal<fFastMapper_Left, fFastMapper_Right>.AddPropertyMapperByPropertyInfo(leftProperty, rightProperty);
 
             Assert.AreEqual(1, fFastMapperInternal<fFastMapper_Left, fFastMapper_Right>.Mappings().Count);
@@ -88,11 +88,14 @@ namespace fFastMapper.Tests
         public void fFastMapperInternal_Mappings()
         {
             fFastMap.MapperFor<Mappings_Left, Mappings_Right>()
+                .SetMaxRecursionLevel(20)
                 .AddPropertyMapper(v => v.Sub.Sub.Description, v => v.Sub.Sub.Sub.Description);
             var actual = fFastMapperInternal<Mappings_Left, Mappings_Right>.Mappings();
 
             Assert.IsTrue(actual.Any(v => v.Item1 == "Mappings_Left.Id" && v.Item2 == "Mappings_Right.Id"));
             Assert.IsTrue(actual.Any(v => v.Item1 == "Mappings_Left.Description" && v.Item2 == "Mappings_Right.Description"));
+            Assert.IsTrue(actual.Any(v => v.Item1 == "Mappings_Left.SubDescription" && v.Item2 == "Mappings_Right.Sub.Description"));
+            Assert.IsTrue(actual.Any(v => v.Item1 == "Mappings_Left.Sub.Age" && v.Item2 == "Mappings_Right.SubAge"));
             Assert.IsTrue(actual.Any(v => v.Item1 == "Mappings_Left.Sub.Sub.Description" && v.Item2 == "Mappings_Right.Sub.Sub.Sub.Description"));
         }
 
@@ -100,6 +103,7 @@ namespace fFastMapper.Tests
         {
             public MappingsSub Sub { get; set; }
             public string Description { get; set; }
+            public int Age { get; set; }
         }
 
         class Mappings_Left
@@ -107,6 +111,8 @@ namespace fFastMapper.Tests
             public int Id { get; set; }
             public string Description { get; set; }
             public MappingsSub Sub { get; set; }
+
+            public string SubDescription { get; set; }
         }
 
         class Mappings_Right
@@ -114,6 +120,8 @@ namespace fFastMapper.Tests
             public int Id { get; set; }
             public string Description { get; set; }
             public MappingsSub Sub { get; set; }
+
+            public int SubAge { get; set; }
         }
 
         [TestMethod()]
@@ -123,11 +131,9 @@ namespace fFastMapper.Tests
                 .SetAutoInitialize(true)
                 .SetDefaultMappingDirection(fFastMap.MappingDirection.Bidirectional);
 
-            //fFastMap.MapperFor<MappingsView_Left, MappingsView_Right>()
-            //    .AddPropertyMapper(v => v.Sub.Sub.Description, v => v.Sub.Sub.Sub.Description);
             var actual = fFastMapperInternal<MappingsView_Left, MappingsView_Right>.MappingsView();
 
-            Assert.IsTrue(actual.Contains("MappingsView_Left.Sub.Sub.Description"));
+            Assert.IsTrue(actual.Contains("MappingsView_Left.SubSubSubDescription"));
         }
 
         class MappingsViewSub

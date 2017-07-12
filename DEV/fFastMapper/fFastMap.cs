@@ -58,10 +58,10 @@ namespace Grax.fFastMapper
         {
             switch (direction)
             {
-                case fFastMap.MappingDirection.Bidirectional:
-                case fFastMap.MappingDirection.LeftToRight:
+                case MappingDirection.Bidirectional:
+                case MappingDirection.LeftToRight:
                     break;
-                case fFastMap.MappingDirection.Unknown:
+                case MappingDirection.Unknown:
                 default:
                     throw new ArgumentException("MappingDirection may not be set to this value", "direction");
             }
